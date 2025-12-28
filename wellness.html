@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Challenge</title>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20.8 4.6c-1.8-1.7-4.6-1.5-6.2.3L12 7.5l-2.6-2.6c-1.6-1.8-4.4-2-6.2-.3-2 1.9-2 5.1 0 7l8.8 8.4 8.8-8.4c2-1.9 2-5.1 0-7z"/>
+</svg>
+
+                <span class="logo-text">Wellness Challenge</span>
+            </div>
+            
+
+            
+            <div class="header-actions" id="loggedInSection">
+                <div class="user-info">
+                    <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span id="currentUserName"></span>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Dashboard
+            </button>
+            <button class="tab" onclick="showTab('leaderboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                Leaderboard
+            </button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <section class="content-section active" id="dashboardTab">
+            <!-- Stats Overview -->
+            <div class="stats-header">
+                <h1 class="page-title">Your Progress</h1>
+                <div class="week-navigation">
+                    <button onclick="changeDashboardWeek(-1)" class="week-nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+                    <div class="week-display">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span id="currentWeekDisplay"></span>
+                    </div>
+                    <button onclick="changeDashboardWeek(1)" id="dashboardNextWeekBtn" class="week-nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Activity Stats Grid -->
+            <div class="stats-carousel-wrapper">
+                <div class="stats-navigation-dots" id="statsNavDots"></div>
+                <button class="carousel-nav-btn carousel-nav-left" id="carouselNavLeft" onclick="scrollCarouselLeft()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </button>
+                <button class="carousel-nav-btn carousel-nav-right" id="carouselNavRight" onclick="scrollCarouselRight()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+                <div class="stats-grid" id="statsGrid"></div>
+            </div>
+
+            <!-- Weekly Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2 class="chart-title">Weekly Overview</h2>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+    <select id="activityChartSelect" class="select-input">
+        <option value="Walking">Walking</option>
+    </select>
+    <select id="compareAgainstSelect" class="select-input" onchange="loadWeeklyChart(currentDashboardWeek)">
+        <option value="">Compare Against: None</option>
+    </select>
+</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-feed-card">
+                <h2 class="feed-title">Recent Activity</h2>
+                <div class="activity-feed" id="recentActivityFeed"></div>
+                <button id="showMoreActivityBtn" class="btn btn-secondary btn-full" style="margin-top: 1rem; display: none;" onclick="loadMoreActivity()">
+                    Load More Activity
+                </button>
+            </div>
+        </section>
+
+        <!-- Leaderboard Tab -->
+        <section class="content-section" id="leaderboardTab">
+            <div class="leaderboard-header">
+                <h1 class="page-title">Leaderboard</h1>
+                <div class="week-navigation">
+                    <button onclick="changeWeek(-1)" class="week-nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+                    <div class="week-display">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span id="leaderboardWeekDisplay"></span>
+                    </div>
+                    <button onclick="changeWeek(1)" id="nextWeekBtn" class="week-nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Chart -->
+            <div class="chart-card">
+                <div class="leaderboard-chart-container chart-container">
+                    <canvas id="leaderboardChart"></canvas>
+                    <p id="leaderboardEmptyMessage" style="text-align: center; padding: 3rem; color: var(--gray-500); display: none;">
+                        No participants with 3+ activities yet
+                    </p>
+                </div>
+            </div>
+
+            <!-- Leaderboard List -->
+            <div class="leaderboard-list" id="leaderboardList"></div>
+        </section>
+
+        <!-- Floating Action Button -->
+        <button class="fab" onclick="openLogModal()" id="fabButton">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+        </button>
+    </main>
+
+    <!-- Activity Breakdown Modal (Mobile Full-Screen) -->
+    <div class="modal-overlay breakdown-modal-overlay" id="breakdownModal" onclick="closeBreakdownModal(event)">
+        <div class="breakdown-modal" onclick="event.stopPropagation()">
+            <div class="breakdown-modal-header">
+                <button class="breakdown-modal-back" onclick="closeBreakdownModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </button>
+                <h2 class="breakdown-modal-title" id="breakdownModalTitle"></h2>
+            </div>
+            
+            <div class="breakdown-modal-body">
+                <div class="breakdown-week-display" id="breakdownWeekDisplay"></div>
+                
+                <div class="breakdown-summary" id="breakdownSummary"></div>
+                
+                <div class="breakdown-separator"></div>
+                
+                <div class="breakdown-activities" id="breakdownActivities"></div>
+                
+                <div class="breakdown-separator"></div>
+                
+                <div class="breakdown-bonus" id="breakdownBonus"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Activity Modal -->
+    <div class="modal-overlay" id="logModal" onclick="closeLogModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Log Activity</h2>
+                <button class="modal-close" onclick="closeLogModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Date Selection -->
+                <div class="date-selector">
+                    <label for="logDate" class="input-label">Select Date</label>
+                    <input type="date" id="logDate" class="date-input">
+                </div>
+
+                <!-- Activities Section -->
+                <div class="activities-section">
+                    <h3 class="section-label">Activities</h3>
+                    <div class="activity-grid" id="activityIconGrid"></div>
+                </div>
+
+                <!-- Activity Form -->
+                <div class="activity-form" id="activityForm" style="display: none;">
+                    <div class="selected-activity" id="selectedActivityDisplay"></div>
+                    <div id="activityInputArea"></div>
+                    <button onclick="submitActivity()" class="btn btn-primary btn-full">Log Activity</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Success Toast -->
+    <div class="toast" id="successToast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav-btn active" onclick="showTab('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Dashboard</span>
+        </button>
+        <button class="bottom-nav-btn" onclick="showTab('leaderboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            <span>Leaderboard</span>
+        </button>
+        <button class="bottom-nav-btn" onclick="openLogModal()">
+            <div class="bottom-nav-fab">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </div>
+            <span>Log Activity</span>
+        </button>
+    </nav>
+
+    <!-- 1. Configuration (must load first) -->
+    <script src="app.js"></script>
+
+</body>
+</html>

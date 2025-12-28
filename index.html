@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Challenge - Welcome</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #00D9FF;
+            --primary-dark: #00B8D4;
+            --accent: #FF3D71;
+            --accent-dark: #E6194B;
+            --success: #00FF88;
+            --bg-primary: #0A0E27;
+            --bg-secondary: #131829;
+            --bg-tertiary: #1A1F3A;
+            --bg-elevated: #1E2441;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B8BFD8;
+            --text-tertiary: #7C84A3;
+            --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.7);
+            --glow-primary: 0 0 20px rgba(0, 217, 255, 0.5), 0 0 40px rgba(0, 217, 255, 0.3);
+            --glow-accent: 0 0 20px rgba(255, 61, 113, 0.5), 0 0 40px rgba(255, 61, 113, 0.3);
+            --radius: 16px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 217, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 61, 113, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: backgroundPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-bottom: 100px;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            color: var(--primary);
+            filter: drop-shadow(var(--glow-primary));
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        .logo-title {
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .logo-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 2px solid rgba(0, 217, 255, 0.2);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-xl), var(--glow-primary);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .select-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            font-size: 1rem;
+            border: 2px solid rgba(0, 217, 255, 0.2);
+            border-radius: var(--radius);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-weight: 600;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2300D9FF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 20px;
+            padding-right: 3rem;
+        }
+
+        .select-input:hover {
+            border-color: var(--primary);
+            background-color: var(--bg-elevated);
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: var(--glow-primary);
+            background-color: var(--bg-elevated);
+        }
+
+        .select-input option {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 0.75rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            box-shadow: var(--glow-accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255, 61, 113, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            /*margin-top: 1rem;*/
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: var(--glow-primary);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .divider::before {
+            margin-right: 1rem;
+        }
+
+        .divider::after {
+            margin-left: 1rem;
+        }
+
+        .info-box {
+            display: none;
+        }
+
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .info-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .error-message {
+            background: rgba(255, 61, 113, 0.1);
+            border: 2px solid rgba(255, 61, 113, 0.3);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 1rem;
+            color: var(--accent);
+            font-size: 0.875rem;
+            display: none;
+            animation: shake 0.5s;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            .logo-section {
+                margin-bottom: 0.5rem;
+            }
+
+            .logo-icon {
+                width: 56px;
+                height: 56px;
+            }
+        }
+
+        @media (min-height: 700px) {
+            body {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.8 4.6c-1.8-1.7-4.6-1.5-6.2.3L12 7.5l-2.6-2.6c-1.6-1.8-4.4-2-6.2-.3-2 1.9-2 5.1 0 7l8.8 8.4 8.8-8.4c2-1.9 2-5.1 0-7z"/>
+            </svg>
+            <h1 class="logo-title">Wellness Challenge</h1>
+           
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Welcome Back</h2>
+           
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="participantSelect" class="form-label">Select Your Name</label>
+                    <select id="participantSelect" class="select-input" required>
+                        <option value="">Choose participant...</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="loginButton">
+                    <span id="loginButtonText">Get Started</span>
+                    <div class="spinner" id="loginSpinner"></div>
+                </button>
+
+                <div class="error-message" id="errorMessage"></div>
+            </form>
+
+            <div class="divider">or</div>
+
+            <button type="button" class="btn btn-secondary" onclick="openInstructions()">
+                <i class="bi bi-info-circle"></i> View Instructions
+            </button>
+
+            <div class="info-box">
+                <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                </svg>
+                <p class="info-text">
+                    New to the challenge? Click "View Instructions" to learn about activities, scoring, and how to participate.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://auwucgomaoibtrcfghmp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3VjZ29tYW9pYnRyY2ZnaG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMTUzMzYsImV4cCI6MjA4MDU5MTMzNn0.dVrYPiSEbvXP2Ur-PhOlOe6e9NWhub_993CTm6ZXREI';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function init() {
+            const storedUserId = localStorage.getItem('currentUserId');
+            if (storedUserId) {
+                const { data, error } = await supabaseClient
+                    .from('participants')
+                    .select('id')
+                    .eq('id', storedUserId)
+                    .eq('active', true)
+                    .single();
+
+                if (data) {
+                    window.location.href = 'wellness.html';
+                    return;
+                } else {
+                    localStorage.removeItem('currentUserId');
+                }
+            }
+
+            await loadParticipants();
+        }
+
+        async function loadParticipants() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('participants')
+                    .select('*')
+                    .eq('active', true)
+                    .order('name');
+
+                if (error) throw error;
+
+                const select = document.getElementById('participantSelect');
+                select.innerHTML = '<option value="">Choose participant...</option>';
+                
+                data.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = p.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading participants:', error);
+                showError('Failed to load participants. Please refresh the page.');
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const participantId = document.getElementById('participantSelect').value;
+            if (!participantId) {
+                showError('Please select your name');
+                return;
+            }
+
+            const button = document.getElementById('loginButton');
+            const buttonText = document.getElementById('loginButtonText');
+            const spinner = document.getElementById('loginSpinner');
+            
+            button.disabled = true;
+            buttonText.style.display = 'none';
+            spinner.classList.add('show');
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('participants')
+                    .select('*')
+                    .eq('id', participantId)
+                    .eq('active', true)
+                    .single();
+
+                if (error) throw error;
+
+                if (!data) {
+                    throw new Error('Participant not found');
+                }
+
+                localStorage.setItem('currentUserId', participantId);
+                window.location.href = 'wellness.html';
+            } catch (error) {
+                console.error('Error logging in:', error);
+                showError('Login failed. Please try again.');
+                
+                button.disabled = false;
+                buttonText.style.display = 'inline';
+                spinner.classList.remove('show');
+            }
+        }
+
+        function openInstructions() {
+            window.open('https://www.psgcas.ac.in', '_blank', 'noopener,noreferrer');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
