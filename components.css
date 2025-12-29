@@ -1576,7 +1576,7 @@
     }
     
     .activity-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -1595,3 +1595,4 @@
     color: var(--text-tertiary);
     border-color: rgba(124, 132, 163, 0.3);
 }
+
