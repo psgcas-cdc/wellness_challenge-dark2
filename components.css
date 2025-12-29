@@ -843,6 +843,75 @@
         padding: 1.5rem 1rem 9rem;
     }
 
+    .header {
+        backdrop-filter: none !important;
+        background: rgba(19, 24, 41, 1);
+    }
+    
+    .activity-feed-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(26, 31, 58, 1);
+    }
+    
+    .activity-item {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(30, 36, 65, 1);
+    }
+    
+    .carousel-nav-btn {
+        backdrop-filter: none !important;
+        background: rgba(0, 217, 255, 0.25);
+    }
+    
+    /* CRITICAL: Simplify shadows */
+    .fab,
+    .stat-card,
+    .leaderboard-item,
+    .activity-feed-card,
+    .chart-card,
+    .modal {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .leaderboard-item.rank-1 .rank-badge,
+    .leaderboard-item.rank-2 .rank-badge,
+    .leaderboard-item.rank-3 .rank-badge {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* CRITICAL: Remove filters */
+    .logo-icon,
+    .stat-icon svg,
+    .activity-check svg,
+    .breakdown-activity-icon svg,
+    .bottom-nav-btn.active svg,
+    .fab svg {
+        filter: none !important;
+    }
+    
+    /* CRITICAL: GPU acceleration */
+    .stats-grid {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        will-change: scroll-position;
+    }
+    
+    .stat-card {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+    }
+    
+    /* CRITICAL: Disable hover effects on mobile */
+    .stat-card:hover,
+    .leaderboard-item:hover,
+    .activity-icon-btn:hover,
+    .btn:hover {
+        transform: translateZ(0) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+
     .header-content {
         flex-direction: column;
         align-items: stretch;
