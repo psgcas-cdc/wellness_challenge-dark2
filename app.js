@@ -18,6 +18,7 @@ let leaderboardChart = null;
 let selectedActivity = null;
 let selectedDate = null;
 let loggedActivitiesForDate = [];
+let userPreferences = null;
 
 // ============================================
 // ACTIVITY ICONS CONFIGURATION
@@ -129,6 +130,17 @@ async function init() {
         }
 
         currentUser = data;
+        // Load user preferences
+        const { data: prefsData } = await supabaseClient
+            .from('user_preferences')
+            .select('*')
+            .eq('participant_id', currentUser.id)
+            .single();
+
+        if (prefsData) {
+            userPreferences = prefsData;
+        }
+
         document.getElementById('currentUserName').textContent = data.nick_name || data.name;
         document.getElementById('mainContent').classList.add('active');
         document.getElementById('fabButton').style.display = 'flex';
@@ -1915,7 +1927,9 @@ function getActivityDescription(activityName) {
     const descriptions = {
         'Meditation': 'Mark this activity as completed for the selected date.',
         'Water': 'Did you drink 2.5L of water?',
-        'Screen Time': 'Were you under your screen time limit?',
+        'Screen Time': userPreferences && userPreferences.screen_time_limit_minutes 
+            ? `Is your screen time less than ${userPreferences.screen_time_limit_minutes} minutes?`
+            : 'Were you under your screen time limit?',
         'Sleep': 'Did you sleep in the correct window (9-10pm to 4:30-5:30am)?'
     };
     return descriptions[activityName] || 'Mark this activity as completed.';
