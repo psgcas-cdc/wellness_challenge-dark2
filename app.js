@@ -411,8 +411,6 @@ async function loadStatsGrid(weekStart) {
 // ============================================
 // STATS CAROUSEL (MOBILE) - Manual Control
 // ============================================
-let statsCarouselCurrentIndex = 0;
-
 function initStatsCarousel() {
     // Only run on mobile
     if (window.innerWidth > 768) return;
@@ -422,13 +420,14 @@ function initStatsCarousel() {
     
     if (!statsGrid || !iconsContainer) return;
     
-    const cards = statsGrid.querySelectorAll('.stat-card');
+    const cards = Array.from(statsGrid.querySelectorAll('.stat-card'));
     if (cards.length === 0) return;
     
     // Clear existing icons
     iconsContainer.innerHTML = '';
     
     // Create navigation icons using activity SVGs
+    const icons = [];
     activities.forEach((activity, index) => {
         const iconBtn = document.createElement('button');
         iconBtn.className = 'stat-icon-nav';
@@ -437,17 +436,44 @@ function initStatsCarousel() {
         iconBtn.onclick = () => scrollToCard(index);
         iconBtn.setAttribute('aria-label', `View ${activity.name} stats`);
         iconsContainer.appendChild(iconBtn);
+        icons.push(iconBtn);
     });
     
-    // Listen for scroll to update active icon
-    let scrollTimeout;
-    statsGrid.addEventListener('scroll', () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            updateActiveIcon();
-            updateNavButtons();
-        }, 100);
+    // ✅ NEW: Use Intersection Observer instead of scroll listener
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+                const index = cards.indexOf(entry.target);
+                if (index !== -1) {
+                    statsCarouselCurrentIndex = index;
+                    
+                    // Update icons efficiently (no DOM queries)
+                    icons.forEach((icon, i) => {
+                        if (i === index) {
+                            icon.classList.add('active');
+                        } else {
+                            icon.classList.remove('active');
+                        }
+                    });
+                    
+                    updateNavButtons();
+                }
+            }
+        });
+    }, {
+        root: statsGrid,
+        threshold: 0.5,
+        rootMargin: '0px'
     });
+    
+    // Observe all cards
+    cards.forEach(card => observer.observe(card));
+    
+    // Store observer for cleanup
+    if (window.statsCarouselObserver) {
+        window.statsCarouselObserver.disconnect();
+    }
+    window.statsCarouselObserver = observer;
     
     // Initial button state
     updateNavButtons();
@@ -470,29 +496,7 @@ function scrollToCard(index) {
     }
 }
 
-function updateActiveIcon() {
-    const statsGrid = document.getElementById('statsGrid');
-    const iconsContainer = document.getElementById('statsNavDots');
-    const cards = statsGrid.querySelectorAll('.stat-card');
-    const icons = iconsContainer.querySelectorAll('.stat-icon-nav');
-    
-    // Find which card is currently in view
-    const scrollLeft = statsGrid.scrollLeft;
-    const cardWidth = cards[0]?.offsetWidth || 0;
-    const gap = 16; // 1rem gap
-    const currentIndex = Math.round(scrollLeft / (cardWidth + gap));
-    
-    statsCarouselCurrentIndex = currentIndex;
-    
-    // Update icons
-    icons.forEach((icon, index) => {
-        if (index === currentIndex) {
-            icon.classList.add('active');
-        } else {
-            icon.classList.remove('active');
-        }
-    });
-}
+
 
 function scrollCarouselLeft() {
     const statsGrid = document.getElementById('statsGrid');
@@ -534,6 +538,12 @@ function updateNavButtons() {
 function stopCarousel() {
     // Reset state when switching to desktop
     statsCarouselCurrentIndex = 0;
+    
+    // Clean up Intersection Observer
+    if (window.statsCarouselObserver) {
+        window.statsCarouselObserver.disconnect();
+        window.statsCarouselObserver = null;
+    }
 }
 
 async function loadWeeklyChart(weekStart) {
@@ -1976,15 +1986,18 @@ document.addEventListener('DOMContentLoaded', () => {
 init();
 
 // Handle window resize for carousel
+// Debounce resize handler for performance
+let resizeTimeout;
 window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-        // Stop carousel on desktop
-        stopCarousel();
-    } else {
-        // Reinitialize on mobile if stats are loaded
-        const statsGrid = document.getElementById('statsGrid');
-        if (statsGrid && statsGrid.children.length > 0) {
-            initStatsCarousel();
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (window.innerWidth > 768) {
+            stopCarousel();
+        } else {
+            const statsGrid = document.getElementById('statsGrid');
+            if (statsGrid && statsGrid.children.length > 0) {
+                initStatsCarousel();
+            }
         }
-    }
+    }, 250);
 });
