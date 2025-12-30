@@ -454,9 +454,10 @@ body::before {
     border: 2px solid rgba(0, 217, 255, 0.2);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl), var(--glow-primary);
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideUp 0.4s cubic-bezier(0.25, 0, 0.2, 1);
     max-height: 90vh;
     overflow-y: auto;
+    will-change: transform, opacity;  /* ← ADD THIS LINE */
 }
 
 @keyframes slideUp {
@@ -469,6 +470,7 @@ body::before {
         transform: translateY(0);
     }
 }
+
 
 .modal-header {
     display: flex;
