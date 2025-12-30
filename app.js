@@ -19,7 +19,9 @@ let selectedActivity = null;
 let selectedDate = null;
 let loggedActivitiesForDate = [];
 let userPreferences = null;
-
+let selectedActivityLog = null;
+let contextMenuOpen = false;
+let statsCarouselCurrentIndex = 0;
 // ============================================
 // ACTIVITY ICONS CONFIGURATION
 // ============================================
@@ -44,6 +46,14 @@ function getWeekStart(date) {
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.setDate(diff)).toISOString().split('T')[0];
+}
+
+function getWeekStartDate(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split('T')[0];
 }
 
 function formatDate(dateStr) {
@@ -503,7 +513,6 @@ function scrollToCard(index) {
         });
         
         statsCarouselCurrentIndex = index;
-        updateActiveIcon();
         updateNavButtons();
     }
 }
@@ -896,6 +905,10 @@ async function loadMoreActivity() {
 function createActivityItem(log) {
     const item = document.createElement('div');
     item.className = 'activity-item';
+    item.dataset.logId = log.id;
+    item.dataset.activityId = log.activity_id;
+    item.dataset.value = log.value;
+    item.dataset.logDate = log.log_date;
     
     let valueDisplay = log.value;
     if (log.activities.name === 'Walking') {
@@ -906,7 +919,12 @@ function createActivityItem(log) {
         valueDisplay = 'completed';
     }
     
-    const timeAgo = getTimeAgo(new Date(log.created_at));
+    // Format date as dd-mm-yyyy
+    const logDate = new Date(log.log_date);
+    const day = String(logDate.getDate()).padStart(2, '0');
+    const month = String(logDate.getMonth() + 1).padStart(2, '0');
+    const year = logDate.getFullYear();
+    const dateStr = `${day}-${month}-${year}`;
     
     item.innerHTML = `
         <div class="activity-item-icon">
@@ -916,9 +934,54 @@ function createActivityItem(log) {
             <div class="activity-item-text">
                 <strong>${log.participants.nick_name || log.participants.name}</strong> logged ${log.activities.name}: ${valueDisplay}
             </div>
-            <div class="activity-item-time">${timeAgo}</div>
+            <div class="activity-item-date">${dateStr}</div>
         </div>
     `;
+    
+    // Context menu variables (declare once at top of file, but handle per item)
+    let longPressTimer = null;
+    
+   // Long press for mobile
+item.addEventListener('touchstart', (e) => {
+    // Only allow editing own activities
+    if (log.participant_id !== currentUser.id) return;
+    
+    longPressTimer = setTimeout(() => {
+        e.preventDefault();
+        selectedActivityLog = {
+            id: log.id,
+            activity_id: log.activity_id,
+            value: log.value,
+            log_date: log.log_date,
+            participant_id: log.participant_id
+        };
+        showContextMenu(e.touches[0].clientX, e.touches[0].clientY);
+    }, 500);
+});
+
+item.addEventListener('touchend', () => {
+    clearTimeout(longPressTimer);
+});
+
+item.addEventListener('touchmove', () => {
+    clearTimeout(longPressTimer);
+});
+
+// Right click for desktop
+item.addEventListener('contextmenu', (e) => {
+    // Only allow editing own activities
+    if (log.participant_id !== currentUser.id) return;
+    
+    e.preventDefault();
+    selectedActivityLog = {
+        id: log.id,
+        activity_id: log.activity_id,
+        value: log.value,
+        log_date: log.log_date,
+        participant_id: log.participant_id
+    };
+    showContextMenu(e.clientX, e.clientY);
+});
     
     return item;
 }
@@ -1800,16 +1863,28 @@ function setTodayDate() {
 
 async function openLogModal() {
     const modal = document.getElementById('logModal');
-    modal.classList.add('active');
+    
+    // Hide form and reset button BEFORE opening modal
+    document.getElementById('activityForm').style.display = 'none';
+    const submitBtn = document.querySelector('#activityForm .btn-primary');
+    if (submitBtn) {
+        submitBtn.textContent = 'Log Activity';
+        submitBtn.onclick = submitActivity;
+    }
     
     setTodayDate();
     selectedActivity = null;
     selectedDate = document.getElementById('logDate').value;
     
+    // Render icons before showing modal to avoid layout shift
     await renderActivityIcons();
     
-    document.getElementById('activityForm').style.display = 'none';
+    // Add a small delay to ensure rendering is complete
+    requestAnimationFrame(() => {
+        modal.classList.add('active');
+    });
 }
+
 
 function closeLogModal(event) {
     if (event && event.target !== event.currentTarget) return;
@@ -1817,6 +1892,13 @@ function closeLogModal(event) {
     const modal = document.getElementById('logModal');
     modal.classList.remove('active');
     selectedActivity = null;
+    
+    // Reset the submit button to default state
+    const submitBtn = document.querySelector('#activityForm .btn-primary');
+    if (submitBtn) {
+        submitBtn.textContent = 'Log Activity';
+        submitBtn.onclick = submitActivity;
+    }
 }
 
 async function renderActivityIcons() {
@@ -1860,13 +1942,15 @@ async function renderActivityIcons() {
             ` : ''}
         `;
         
-        button.onclick = () => selectActivity(activity, isLogged && isBoolean);
+        button.onclick = function() { 
+            selectActivity(activity, isLogged && isBoolean, this); 
+        };
         
         grid.appendChild(button);
     });
 }
 
-function selectActivity(activity, isCompleted) {
+function selectActivity(activity, isCompleted, buttonElement) {
     if (isCompleted) {
         showToast('Already logged for this date');
         return;
@@ -1878,7 +1962,9 @@ function selectActivity(activity, isCompleted) {
     document.querySelectorAll('.activity-icon-btn').forEach(btn => {
         btn.classList.remove('selected');
     });
-    event.currentTarget.classList.add('selected');
+    if (buttonElement) {
+        buttonElement.classList.add('selected');
+    }
     
     // Show form
     const form = document.getElementById('activityForm');
@@ -1991,6 +2077,240 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('logDate');
     if (dateInput) {
         dateInput.addEventListener('change', renderActivityIcons);
+    }
+});
+
+
+// ============================================
+// CONTEXT MENU & EDITING
+// ============================================
+function showContextMenu(x, y) {
+    const menu = document.getElementById('activityContextMenu');
+    contextMenuOpen = true;
+    
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.classList.add('show');
+    
+    setTimeout(() => {
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            menu.style.left = (x - rect.width) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+            menu.style.top = (y - rect.height) + 'px';
+        }
+    }, 10);
+}
+
+function hideContextMenu() {
+    const menu = document.getElementById('activityContextMenu');
+    menu.classList.remove('show');
+    setTimeout(() => {
+        contextMenuOpen = false;
+    }, 200);
+}
+
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('activityContextMenu');
+    if (menu && !menu.contains(e.target)) {
+        hideContextMenu();
+    }
+});
+
+async function editActivityFromMenu() {
+    hideContextMenu();
+    
+    if (!selectedActivityLog) return;
+    
+    // Open modal first
+    const modal = document.getElementById('logModal');
+    modal.classList.add('active');
+    
+    // Set the date
+    document.getElementById('logDate').value = selectedActivityLog.log_date;
+    
+    // Render activity icons
+    await renderActivityIcons();
+    
+    // Find the activity object
+    const activityToSelect = activities.find(a => a.id === selectedActivityLog.activity_id);
+    if (!activityToSelect) return;
+    
+    // Manually trigger the selection (without using click which might cause issues)
+    selectedActivity = activityToSelect;
+    
+    // Update UI to show selected activity
+    const buttons = document.querySelectorAll('.activity-icon-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('selected');
+        const activityName = btn.querySelector('span').textContent;
+        if (activityName === activityToSelect.name) {
+            btn.classList.add('selected');
+        }
+    });
+    
+    // Show the form with pre-filled data
+    const form = document.getElementById('activityForm');
+    const display = document.getElementById('selectedActivityDisplay');
+    const inputArea = document.getElementById('activityInputArea');
+    
+    display.innerHTML = `
+        ${activityIcons[activityToSelect.name] || ''}
+        <span class="selected-activity-name">${activityToSelect.name}</span>
+    `;
+    
+    if (activityToSelect.activity_type === 'accumulative') {
+        let unit = activityToSelect.name === 'Walking' ? 'steps' : 'pages';
+        let placeholder = activityToSelect.name === 'Walking' ? 'e.g., 10000' : 'e.g., 20';
+        
+        inputArea.innerHTML = `
+            <div class="activity-input-group">
+                <label for="activityValue" class="input-label">Enter ${unit}</label>
+                <input type="number" id="activityValue" class="activity-input" 
+                       placeholder="${placeholder}" min="1" required value="${selectedActivityLog.value}">
+                <div class="input-hint">Enter the number of ${unit} you want to log</div>
+            </div>
+        `;
+    } else {
+        inputArea.innerHTML = `
+            <div class="activity-input-group">
+                <p style="color: var(--gray-600); font-size: 0.875rem;">
+                    ${getActivityDescription(activityToSelect.name)}
+                </p>
+            </div>
+        `;
+    }
+    
+    form.style.display = 'block';
+    
+    // Change button to "Update"
+    const submitBtn = document.querySelector('#activityForm .btn-primary');
+    submitBtn.textContent = 'Update Activity';
+    submitBtn.onclick = async () => {
+        await updateActivity();
+    };
+    
+    // Scroll to form
+    setTimeout(() => {
+        form.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end'
+        });
+    }, 100);
+}
+
+async function updateActivity() {
+    const activityId = selectedActivity.id;
+    const date = document.getElementById('logDate').value;
+    let value;
+    
+    if (selectedActivity.activity_type === 'accumulative') {
+        const inputField = document.getElementById('activityValue');
+        value = parseFloat(inputField.value);
+        
+        if (!value || value <= 0) {
+            alert('Please enter a valid number');
+            return;
+        }
+    } else {
+        value = 1;
+    }
+    
+    try {
+        const { error: deleteError } = await supabaseClient
+            .from('activity_logs')
+            .delete()
+            .eq('id', selectedActivityLog.id);
+        
+        if (deleteError) throw deleteError;
+        
+        const weekStart = getWeekStartDate(new Date(date));
+        const { error: insertError } = await supabaseClient
+            .from('activity_logs')
+            .insert({
+                participant_id: currentUser.id,
+                activity_id: activityId,
+                log_date: date,
+                value: value,
+                week_start_date: weekStart
+            });
+        
+        if (insertError) throw insertError;
+        
+        showToast('Activity updated successfully!');
+        closeLogModal();
+        
+        const submitBtn = document.querySelector('#activityForm .btn-primary');
+        submitBtn.textContent = 'Log Activity';
+        submitBtn.onclick = submitActivity;
+        
+        await loadDashboard();
+        
+    } catch (error) {
+        console.error('Error updating activity:', error);
+        showToast('Failed to update activity. Please try again.');
+    }
+}
+
+function deleteActivityFromMenu() {
+    hideContextMenu();
+    
+    if (!selectedActivityLog) return;
+    
+    const activity = activities.find(a => a.id === selectedActivityLog.activity_id);
+    const activityName = activity ? activity.name : 'this activity';
+    let valueText = selectedActivityLog.value;
+    
+    if (activity) {
+        if (activity.name === 'Walking') {
+            valueText = `${selectedActivityLog.value.toLocaleString()} steps`;
+        } else if (['Reading', 'Writing'].includes(activity.name)) {
+            valueText = `${selectedActivityLog.value} pages`;
+        } else {
+            valueText = '';
+        }
+    }
+    
+    const dialog = document.getElementById('confirmDialog');
+    const message = document.getElementById('confirmDialogMessage');
+    message.textContent = `Are you sure you want to delete ${valueText ? valueText + ' of ' : ''}${activityName}?`;
+    
+    dialog.classList.add('active');
+    
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+    deleteBtn.onclick = async () => {
+        await confirmDelete();
+    };
+}
+
+async function confirmDelete() {
+    try {
+        const { error } = await supabaseClient
+            .from('activity_logs')
+            .delete()
+            .eq('id', selectedActivityLog.id);
+        
+        if (error) throw error;
+        
+        showToast('Activity deleted successfully');
+        closeConfirmDialog();
+        
+        await loadDashboard();
+        
+    } catch (error) {
+        console.error('Error deleting activity:', error);
+        showToast('Failed to delete activity. Please try again.');
+    }
+}
+
+function closeConfirmDialog() {
+    document.getElementById('confirmDialog').classList.remove('active');
+}
+
+document.getElementById('confirmDialog')?.addEventListener('click', (e) => {
+    if (e.target.id === 'confirmDialog') {
+        closeConfirmDialog();
     }
 });
 
