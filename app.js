@@ -44,14 +44,14 @@ const activityIcons = {
 function getWeekStart(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = d.getDate() - day ;
     return new Date(d.setDate(diff)).toISOString().split('T')[0];
 }
 
 function getWeekStartDate(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = d.getDate() - day;
     d.setDate(diff);
     return d.toISOString().split('T')[0];
 }
